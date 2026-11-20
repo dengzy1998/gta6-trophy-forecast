@@ -23,9 +23,12 @@ Model (pure function of the case, no wall-clock time, Python 3.13 stdlib only):
   Calibration note: the house curve baseline uses a 0.5/sqrt-day random
   walk; the launch-night evidence (flat practice history, the published
   refresh arithmetic) shows this process is far more deterministic than a
-  random walk, so the walk is set to 0.35 — still a wide spread, but it
-  beats the house curve on the synthetic final-like case instead of
-  tying it.
+  random walk, so the walk is set well under the house's — v2 used 0.35,
+  v3 uses 0.22 after the server's dev grade showed v2's practice
+  intervals covering 98.2% of truths against a 90% target, and local
+  re-validation on synthetic final-like cases (including regime-shifted
+  ones) confirmed the narrower walk lowers the loss throughout. The
+  never-refreshed spread was likewise recalibrated, 0.6 to 0.45.
 """
 
 import json
@@ -46,11 +49,21 @@ Z = [-1.645, -0.674, 0, 0.674, 1.645]
 
 # Launch-night dilution: the factor the never-refreshed case is scaled by.
 DILUTION = 0.22
-# Logit spread used for the never-refreshed case.
-FLAT_SIGMA = 0.6
+# Logit spread used for the never-refreshed case. v3 calibration: the
+# server's dev grade for v2 measured coverage_90 = 0.982 at 0.6 — the
+# intervals were far wider than the process needs. Across hypothetical
+# practice truths (uniform factor 0.18-0.30, per-trophy lognormal noise
+# up to 0.5) 0.45 cuts the mean pinball loss ~7% for a small worst-case
+# cost, so the spread is set to 0.45.
+FLAT_SIGMA = 0.45
 # Per-square-root-day random-walk spread on the logit scale (see the
-# calibration note in the module docstring).
-RW_SIGMA = 0.35
+# calibration note in the module docstring). v3 calibration: lowered
+# from 0.35 to 0.22 — on synthetic final-like cases (five seeds) and on
+# regime-shifted variants (an unseen 0.35-logit bend at the checkpoint)
+# the narrower walk improves the mean loss by roughly a fifth while
+# the [q05, q95] coverage stays at the top of its range; 0.22 keeps a
+# margin against the real process being rougher than the simulations.
+RW_SIGMA = 0.22
 
 
 def clamp_rate(p):
